@@ -1,0 +1,123 @@
+package cinema
+
+const val LVL_UP = 60
+const val PRICE_CHEAP = 8
+const val PRICE_EXP = 10
+
+var bookedSeats = emptyArray<Pair<Int, Int>>()
+const val MENU = ("\n1. Show the seats\n2. Buy a ticket\n3. Statistics\n0. Exit")
+
+fun main() {
+    val rows = printlnRead("Enter the number of rows:")
+    val seats = printlnRead("Enter the number of seats in each row:")
+
+    while (true) {
+        when (printlnRead(MENU)) {
+            0 -> return
+            1 -> printHall(rows, seats)
+            2 -> {
+                bookTicket(rows, seats)
+                printHall(rows, seats)
+            }
+            3 -> statistics(rows, seats)
+        }
+    }
+}
+
+fun printlnRead(info: String): Int {
+    println(info)
+    return readLine()!!.toInt()
+}
+
+fun printHall(rows: Int, seats: Int) {
+    println("Cinema:")
+    for (row in 0 ..rows) {
+        for (seat in 0..seats) {
+            if (row == 0 && seat == 0) {
+                print(" ")
+            } else if (row == 0) {
+                print(" $seat")
+            } else if (seat == 0) {
+                print("$row")
+            } else {
+                print(" ")
+                print(getSeatMarker(row, seat))
+            }
+        }
+        println()
+    }
+}
+
+fun currentIncome(rows: Int, seats: Int): String {
+    val bookedRows = bookedSeats.map { it.first }
+    var total = 0
+
+    for (i in bookedRows) {
+        total += ticketPrice(i, rows, seats)
+    }
+    return "Current income: $$total"
+}
+
+fun totalIncome(rows: Int, seats: Int): String {
+    val middleOfHall = rows / 2
+
+    val moneyFromAllSeats = if (rows * seats < LVL_UP) {
+        (rows * seats) * PRICE_EXP
+    } else {
+        middleOfHall * seats * PRICE_EXP + (middleOfHall + 1) * seats * PRICE_CHEAP
+    }
+    return "Total income: $$moneyFromAllSeats"
+}
+
+fun statistics(rows: Int, seats: Int) {
+    println()
+    println(purchased())
+    println(percentage(rows, seats))
+    println(currentIncome(rows, seats))
+    println(totalIncome(rows, seats))
+}
+
+fun percentage(rows: Int, seats: Int): String {
+    val percentage = ((bookedSeats.size) / (rows.toDouble() * seats.toDouble()) * 100.0)
+    val formatPercentage = "%.2f".format(percentage)
+    return "Percentage: $formatPercentage%"
+}
+
+fun purchased(): String {
+    val purchasedTickets = if (bookedSeats.isNotEmpty()) bookedSeats.size else 0
+    return "Number of purchased tickets: $purchasedTickets"
+}
+
+fun bookTicket(rows: Int, seats: Int) {
+    do {
+        val selectedRow = printlnRead("\nEnter a row number:")
+        val selectedSeat = printlnRead("Enter a seat number in that row:")
+        var count = 0
+
+        val priceOfTicket = ticketPrice(selectedRow, rows, seats)
+        println("Ticket price: $$priceOfTicket\n")
+
+        if (bookedSeats.contains(Pair(selectedRow, selectedSeat))) {
+            println("That ticket has already been purchased!\n")
+        } else if (selectedRow > rows || selectedSeat > seats) {
+            println("Wrong input!\n")
+        } else {
+            bookedSeats += Pair(selectedRow, selectedSeat)
+            count = 1
+        }
+    } while (count == 0)
+}
+
+fun ticketPrice(row: Int, rows: Int, seats: Int): Int {
+    val middleOfHall = rows / 2 + 1
+    var tPrice = 0
+
+    if (rows * seats < LVL_UP) tPrice = PRICE_EXP
+    if (row <= middleOfHall && rows * seats > LVL_UP) tPrice = PRICE_EXP
+    if (row >= middleOfHall && rows * seats > LVL_UP) tPrice = PRICE_CHEAP
+    return tPrice
+}
+
+fun getSeatMarker(rowNumber: Int, seatNumber: Int): String {
+    return if (bookedSeats.contains(Pair(rowNumber, seatNumber))) "B" else "S"
+}
